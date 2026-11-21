@@ -3,6 +3,10 @@
 // a small raster canvas, a hand-drawn 5x7 bitmap font, and a
 // hand-rolled PNG encoder (zlib + CRC32). No network, no randomness,
 // no time or date reads, so two runs write byte-identical files.
+// Layout: an orbit — the six headline stories are circular
+// illustrated medallions around the sides, and the thirteen further
+// stories sit in the middle as words only, inside a central box with
+// one gold marker per line so the lines stay distinct.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { deflateSync } from "node:zlib";
 
@@ -23,7 +27,14 @@ const LIGHT = [232, 226, 210];
 
 // ---- canvas ---------------------------------------------------------
 const px = new Uint8Array(W * H * 3);
+// Optional circular clip: while set, setPixel only paints inside it.
+// Used to crop each story scene into a round medallion.
+let clipCircle = null;
 function setPixel(x, y, c) {
+  if (clipCircle) {
+    const dx = x - clipCircle.cx, dy = y - clipCircle.cy;
+    if (dx * dx + dy * dy > clipCircle.r * clipCircle.r) return;
+  }
   if (x < 0 || y < 0 || x >= W || y >= H) return;
   const i = (y * W + x) * 3;
   px[i] = c[0]; px[i + 1] = c[1]; px[i + 2] = c[2];
@@ -225,16 +236,16 @@ function scenePoland(x, y, w, h) {
   // impact burst on the ground
   fillCircle(x + w - 96, y + h - 30, 12, [255, 170, 50]);
   fillCircle(x + w - 96, y + h - 30, 6, [255, 220, 90]);
-  // NATO-style shield, centre, with a white star
-  fillRect(x + 112, y + 62, 40, 46, BLUE);
-  triangle(x + 112, y + 108, x + 152, y + 108, x + 132, y + 128, BLUE);
-  fillCircle(x + 132, y + 84, 7, WHITE);
-  fillRect(x + 129, y + 78, 6, 12, BLUE);
-  fillRect(x + 126, y + 81, 12, 6, BLUE);
+  // NATO-style shield, centre, with a white star (kept inside a 96px scene)
+  fillRect(x + 104, y + 44, 40, 34, BLUE);
+  triangle(x + 104, y + 78, x + 144, y + 78, x + 124, y + 92, BLUE);
+  fillCircle(x + 124, y + 60, 7, WHITE);
+  fillRect(x + 121, y + 54, 6, 12, BLUE);
+  fillRect(x + 118, y + 57, 12, 6, BLUE);
 }
 function sceneUkraine(x, y, w, h) {
   fillRect(x, y, w, h, [24, 32, 54]); // night sky
-  fillCircle(x + w - 30, y + 22, 10, [240, 230, 190]); // moon
+  fillCircle(x + w - 32, y + 22, 10, [240, 230, 190]); // moon
   // skyline in dark blue
   fillRect(x + 10, y + h - 70, 34, 70, [52, 68, 96]);
   fillRect(x + 50, y + h - 92, 30, 92, [52, 68, 96]);
@@ -296,34 +307,33 @@ function sceneMarkets(x, y, w, h) {
   fillRect(x, y, w, h, WHITE);
   // axes
   line(x + 18, y + 12, x + 18, y + h - 18, SLATE, 2);
-  line(x + 18, y + h - 18, x + w - 12, y + h - 18, SLATE, 2);
+  line(x + 18, y + h - 18, x + 130, y + h - 18, SLATE, 2);
   // falling chart line, red, stepped down
-  const pts = [[26, 26], [58, 34], [86, 30], [112, 52], [138, 66], [164, 92]];
+  const pts = [[24, 24], [46, 30], [66, 28], [84, 44], [100, 56], [116, 78]];
   for (let i = 0; i < pts.length - 1; i++) {
     line(x + pts[i][0], y + pts[i][1], x + pts[i + 1][0], y + pts[i + 1][1], RED, 4);
   }
   // down arrow at the end
-  triangle(x + 158, y + 88, x + 176, y + 88, x + 167, y + 104, RED);
+  triangle(x + 110, y + 74, x + 126, y + 74, x + 118, y + 88, RED);
   // small bars underneath, shrinking
-  fillRect(x + 30, y + h - 44, 14, 22, [190, 200, 212]);
-  fillRect(x + 54, y + h - 36, 14, 14, [190, 200, 212]);
-  fillRect(x + 78, y + h - 30, 14, 8, [190, 200, 212]);
-  drawText("-3.7%", x + 108, y + 18, 2, RED);
+  fillRect(x + 26, y + h - 44, 14, 22, [190, 200, 212]);
+  fillRect(x + 46, y + h - 36, 14, 14, [190, 200, 212]);
+  fillRect(x + 66, y + h - 30, 14, 8, [190, 200, 212]);
 }
 function sceneCrypto(x, y, w, h) {
   fillRect(x, y, w, h, [120, 20, 20]); // deep red: a market in the red
   // falling bars, left: tall to short
-  fillRect(x + 12, y + 58, 16, 60, [255, 90, 70]);
-  fillRect(x + 34, y + 74, 16, 44, [255, 90, 70]);
-  fillRect(x + 56, y + 90, 16, 28, [255, 90, 70]);
+  fillRect(x + 18, y + 44, 16, 40, [255, 90, 70]);
+  fillRect(x + 40, y + 54, 16, 30, [255, 90, 70]);
+  fillRect(x + 62, y + 64, 16, 20, [255, 90, 70]);
   // bitcoin coin, right
-  fillCircle(x + 118, y + 58, 36, GOLD);
-  ring(x + 118, y + 58, 36, 3, [255, 220, 130]);
-  drawText("B", x + 106, y + 36, 4, [120, 20, 20]);
+  fillCircle(x + 112, y + 50, 32, GOLD);
+  ring(x + 112, y + 50, 32, 3, [255, 220, 130]);
+  drawText("B", x + 100, y + 28, 4, [120, 20, 20]);
   // down arrow under the coin
-  line(x + 118, y + 100, x + 118, y + 112, WHITE, 3);
-  triangle(x + 106, y + 104, x + 130, y + 104, x + 118, y + 116, WHITE);
-  drawText("-5%", x + 12, y + 14, 3, WHITE);
+  line(x + 112, y + 84, x + 112, y + 90, WHITE, 3);
+  triangle(x + 100, y + 86, x + 124, y + 86, x + 112, y + 96, WHITE);
+  drawText("-5%", x + 18, y + 10, 3, WHITE);
 }
 
 // ---- layout -----------------------------------------------------------
@@ -336,22 +346,22 @@ const STORIES = [
   {
     kicker: "UKRAINE / WAR", color: BLUE, scene: sceneUkraine,
     head: "OVERNIGHT BARRAGE KILLS 8 IN UKRAINE",
-    cap: "28 hurt in the huge air attack. In Kryvyi Rih: 2 dead, 42 hurt, 4 children.",
+    cap: "28 hurt. Kryvyi Rih: 2 dead, 42 hurt, 4 children.",
   },
   {
     kicker: "SAUDI ARABIA / GULF", color: GOLD, scene: sceneRiyadh,
     head: "HOUTHI MISSILE STOPPED OVER RIYADH",
-    cap: "Saudi defences intercept the attack a day after a Riyadh tower was hit.",
+    cap: "Saudi defences stop the attack a day after a tower hit.",
   },
   {
     kicker: "INDIA / WEATHER", color: TEAL, scene: sceneAkvan,
     head: "CYCLONE AKVAN HITS ODISHA COAST",
-    cap: "Landfall near Gopalpur at 70-80 km/h. Over 300,000 people moved to shelters.",
+    cap: "Landfall at 70-80 km/h. Over 300,000 moved to shelters.",
   },
   {
     kicker: "MARKETS / WALL STREET", color: RED, scene: sceneMarkets,
     head: "STOCKS SLIDE INTO CORRECTION",
-    cap: "Wall Street falls about 3.7% on Friday as AI shares plunge. The Dow drops 1,101 points.",
+    cap: "Wall Street falls 3.7% as AI shares plunge. Dow drops 1,101 points.",
   },
   {
     kicker: "CRYPTO / MARKETS", color: RED, scene: sceneCrypto,
@@ -360,22 +370,86 @@ const STORIES = [
   },
 ];
 
-function drawPanel(s, x, y, w, h) {
+// ---- circular medallions and orbit cards --------------------------
+// Draw one story scene cropped into a circle, with a coloured ring.
+function drawMedallion(s, cx, cy, r) {
+  // Draw the scene at its natural 164x118 size, centred on the
+  // medallion, so its composition is kept and the circle crops the
+  // corners like a photo.
+  clipCircle = { cx, cy, r: r - 4 };
+  s.scene(cx - 82, cy - 59, 164, 118);
+  clipCircle = null;
+  ring(cx, cy, r - 2, 3, s.color);
+  ring(cx, cy, r, 2, NAVY);
+}
+function cardFrame(x, y, w, h) {
   fillRect(x, y, w, h, WHITE);
-  // border
   fillRect(x, y, w, 3, SLATE); fillRect(x, y + h - 3, w, 3, SLATE);
   fillRect(x, y, 3, h, SLATE); fillRect(x + w - 3, y, 3, h, SLATE);
-  // kicker strip
-  fillRect(x + 3, y + 3, w - 6, 30, s.color);
-  drawText(s.kicker, x + 14, y + 11, 2, WHITE);
-  // pictorial scene, left
-  s.scene(x + 12, y + 45, 164, 118);
-  // headline, right of the scene
-  const headLines = wrap(s.head, 3, w - 200);
-  drawLines(headLines, x + 188, y + 48, 3, INK, 26);
-  // caption, full width under the scene
+}
+// Horizontal card: medallion on the left, headline and caption right.
+function drawCardH(s, x, y, w, h) {
+  cardFrame(x, y, w, h);
+  fillRect(x + 3, y + 3, w - 6, 28, s.color);
+  drawText(s.kicker, x + 12, y + 10, 2, WHITE);
+  const r = 70;
+  const cx = x + 88, cy = y + 31 + Math.floor((h - 31) / 2);
+  drawMedallion(s, cx, cy, r);
+  const tx = x + 176;
+  const headLines = wrap(s.head, 3, w - 188);
+  drawLines(headLines, tx, y + 42, 3, INK, 26);
+  const capLines = wrap(s.cap, 2, w - 188);
+  drawLines(capLines, tx, y + 42 + headLines.length * 26 + 8, 2, SLATE, 19);
+}
+// Vertical card: medallion on top, headline and caption centred below.
+function drawCardV(s, x, y, w, h) {
+  cardFrame(x, y, w, h);
+  fillRect(x + 3, y + 3, w - 6, 28, s.color);
+  drawText(s.kicker, x + 12, y + 10, 2, WHITE);
+  const cx = x + Math.floor(w / 2), cy = y + 31 + 8 + 85;
+  drawMedallion(s, cx, cy, 85);
+  const headLines = wrap(s.head, 3, w - 24);
+  const hy = cy + 85 + 14;
+  headLines.forEach((ln, i) => drawTextCentered(ln, cx, hy + i * 26, 3, INK));
   const capLines = wrap(s.cap, 2, w - 24);
-  drawLines(capLines, x + 12, y + 176, 2, SLATE, 19);
+  const capY = hy + headLines.length * 26 + 10;
+  capLines.forEach((ln, i) => drawTextCentered(ln, cx, capY + i * 19, 2, SLATE));
+}
+
+// ---- central box: the further stories, words only ------------------
+// A rectangle, not a circle: one marked line per story — a gold square
+// in front of each line — so the lines never blend into one block.
+const MORE_ITEMS = [
+  "ANTHROPIC IPO JUMPS 17%",
+  "GOLD FALLS 4% TO $3,539",
+  "OIL RISES 1.4% TO $83.62",
+  "NASDAQ FALLS 5.3%",
+  "EU: 1BN EURO FOR UKRAINE",
+  "UK PLEDGES 1,000 DRONES",
+  "SENATE REJECTS IRAN VOTE",
+  "TRUMP PARDONS PETE ROSE",
+  "TANKER HIT OFF HORMUZ",
+  "TWO DANES IN RUSSIAN PLOT",
+  "THACI GUILTY: 17 MONTHS",
+  "DISABILITY LAW PASSES",
+  "US SANCTIONS 4 IRANIANS",
+];
+
+function drawMoreBox() {
+  const x = 312, y = 364, w = 396, h = 384;
+  fillRect(x, y, w, h, WHITE);
+  fillRect(x, y, w, 3, SLATE); fillRect(x, y + h - 3, w, 3, SLATE);
+  fillRect(x, y, 3, h, SLATE); fillRect(x + w - 3, y, 3, h, SLATE);
+  // header strip
+  fillRect(x + 3, y + 3, w - 6, 28, RED);
+  drawText("MORE TODAY - 13 STORIES", x + 12, y + 10, 2, WHITE);
+  // one marked line per story
+  const top = y + 56, lead = 23;
+  MORE_ITEMS.forEach((item, i) => {
+    const iy = top + i * lead;
+    fillRect(x + 12, iy + 3, 7, 7, GOLD);
+    drawText(item, x + 26, iy, 2, INK);
+  });
 }
 
 function drawHeader() {
@@ -383,7 +457,7 @@ function drawHeader() {
   fillRect(0, 148, W, 4, GOLD);
   drawText("SATURDAY 21 NOVEMBER 2026", 28, 26, 4, WHITE);
   drawText("THE WORLD IN ONE PICTURE", 28, 84, 2, GOLD);
-  drawText("SIX STORIES THAT DEFINED THE DAY", 28, 112, 2, [190, 200, 214]);
+  drawText("22 STORIES THAT DEFINED THE DAY", 28, 112, 2, [190, 200, 214]);
   // globe, right of the header
   const gx = 924, gy = 74;
   ring(gx, gy, 46, 3, WHITE);
@@ -411,11 +485,15 @@ function drawFooter() {
 function main() {
   fillRect(0, 0, W, H, PAPER);
   drawHeader();
-  const colW = 488, rowH = 246;
-  STORIES.forEach((s, i) => {
-    const col = i % 2, row = Math.floor(i / 2);
-    drawPanel(s, 16 + col * (colW + 16), 164 + row * (rowH + 16), colW, rowH);
-  });
+  // Orbit: six medallion cards around the sides, the word-only disc
+  // in the middle.
+  drawCardH(STORIES[0], 16, 160, 480, 192);   // Poland, top left
+  drawCardH(STORIES[1], 528, 160, 480, 192);  // Ukraine, top right
+  drawCardV(STORIES[2], 16, 364, 284, 384);   // Riyadh, middle left
+  drawCardV(STORIES[3], 724, 364, 284, 384);  // Akvan, middle right
+  drawCardH(STORIES[4], 16, 760, 480, 180);   // Markets, bottom left
+  drawCardH(STORIES[5], 528, 760, 480, 180);  // Crypto, bottom right
+  drawMoreBox();
   drawFooter();
   const outDir = process.env.MAKEFUN_OUTPUT_DIR || "out";
   mkdirSync(outDir, { recursive: true });

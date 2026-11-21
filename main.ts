@@ -23,6 +23,8 @@ const BLUE = [31, 93, 164];
 const GOLD = [201, 148, 42];
 const TEAL = [18, 122, 110];
 const SLATE = [84, 98, 114];
+const DECK = [40, 56, 76]; // captions: darker than SLATE so a reader can
+// actually read the small text, still lighter than the INK headlines
 const LIGHT = [232, 226, 210];
 
 // ---- canvas ---------------------------------------------------------
@@ -352,8 +354,8 @@ const STORIES = [
   },
   {
     kicker: "SAUDI ARABIA / GULF", color: GOLD, scene: sceneRiyadh,
-    head: "HOUTHI MISSILE STOPPED OVER RIYADH",
-    cap: "Saudi defences stop the attack a day after a tower hit.",
+    head: "HOUTHI MISSILE STOPPED",
+    cap: "Saudi defences stop the missile over Riyadh, a day after a tower hit.",
   },
   {
     kicker: "INDIA / WEATHER", color: TEAL, scene: sceneAkvan,
@@ -401,7 +403,7 @@ function drawCardH(s, x, y, w, h) {
   const headLines = wrap(s.head, 3, w - 188);
   drawLines(headLines, tx, y + 42, 3, INK, 26);
   const capLines = wrap(s.cap, 2, w - 188);
-  drawLines(capLines, tx, y + 42 + headLines.length * 26 + 8, 2, SLATE, 19);
+  drawLines(capLines, tx, y + 42 + headLines.length * 26 + 8, 2, DECK, 19);
 }
 // Vertical card: medallion on top, headline and caption centred below.
 function drawCardV(s, x, y, w, h) {
@@ -415,7 +417,7 @@ function drawCardV(s, x, y, w, h) {
   headLines.forEach((ln, i) => drawTextCentered(ln, cx, hy + i * 26, 3, INK));
   const capLines = wrap(s.cap, 2, w - 24);
   const capY = hy + headLines.length * 26 + 10;
-  capLines.forEach((ln, i) => drawTextCentered(ln, cx, capY + i * 19, 2, SLATE));
+  capLines.forEach((ln, i) => drawTextCentered(ln, cx, capY + i * 19, 2, DECK));
 }
 
 // ---- central box: the further stories, words only ------------------

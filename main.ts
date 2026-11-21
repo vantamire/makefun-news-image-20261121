@@ -237,11 +237,11 @@ function scenePoland(x, y, w, h) {
   fillCircle(x + w - 96, y + h - 30, 12, [255, 170, 50]);
   fillCircle(x + w - 96, y + h - 30, 6, [255, 220, 90]);
   // NATO-style shield, centre, with a white star (kept inside a 96px scene)
-  fillRect(x + 104, y + 44, 40, 34, BLUE);
-  triangle(x + 104, y + 78, x + 144, y + 78, x + 124, y + 92, BLUE);
-  fillCircle(x + 124, y + 60, 7, WHITE);
-  fillRect(x + 121, y + 54, 6, 12, BLUE);
-  fillRect(x + 118, y + 57, 12, 6, BLUE);
+  fillRect(x + 94, y + 44, 40, 34, BLUE);
+  triangle(x + 94, y + 78, x + 134, y + 78, x + 114, y + 92, BLUE);
+  fillCircle(x + 114, y + 60, 7, WHITE);
+  fillRect(x + 111, y + 54, 6, 12, BLUE);
+  fillRect(x + 108, y + 57, 12, 6, BLUE);
 }
 function sceneUkraine(x, y, w, h) {
   fillRect(x, y, w, h, [24, 32, 54]); // night sky
@@ -333,7 +333,9 @@ function sceneCrypto(x, y, w, h) {
   // down arrow under the coin
   line(x + 112, y + 84, x + 112, y + 90, WHITE, 3);
   triangle(x + 100, y + 86, x + 124, y + 86, x + 112, y + 96, WHITE);
-  drawText("-5%", x + 18, y + 10, 3, WHITE);
+  // "-5%" at the bottom centre, inside the medallion circle: the old
+  // top-left spot sat outside the clip and was cut in half
+  drawText("-5%", x + 65, y + 100, 2, WHITE);
 }
 
 // ---- layout -----------------------------------------------------------
@@ -345,7 +347,7 @@ const STORIES = [
   },
   {
     kicker: "UKRAINE / WAR", color: BLUE, scene: sceneUkraine,
-    head: "OVERNIGHT BARRAGE KILLS 8 IN UKRAINE",
+    head: "OVERNIGHT BARRAGE KILLS 8",
     cap: "28 hurt. Kryvyi Rih: 2 dead, 42 hurt, 4 children.",
   },
   {
@@ -355,7 +357,7 @@ const STORIES = [
   },
   {
     kicker: "INDIA / WEATHER", color: TEAL, scene: sceneAkvan,
-    head: "CYCLONE AKVAN HITS ODISHA COAST",
+    head: "CYCLONE AKVAN HITS ODISHA",
     cap: "Landfall at 70-80 km/h. Over 300,000 moved to shelters.",
   },
   {
@@ -443,8 +445,9 @@ function drawMoreBox() {
   // header strip
   fillRect(x + 3, y + 3, w - 6, 28, RED);
   drawText("MORE TODAY - 13 STORIES", x + 12, y + 10, 2, WHITE);
-  // one marked line per story
-  const top = y + 56, lead = 23;
+  // one marked line per story; the block is centred in the box so no
+  // gap is left at the bottom
+  const top = y + 50, lead = 25;
   MORE_ITEMS.forEach((item, i) => {
     const iy = top + i * lead;
     fillRect(x + 12, iy + 3, 7, 7, GOLD);

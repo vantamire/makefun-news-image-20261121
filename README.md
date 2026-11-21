@@ -30,3 +30,9 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
 Pure Node 22 standard library, no network, deterministic: two runs write
 byte-identical PNG files.
+
+v6 (21 Nov 10:15 WIB): the Ukraine and Akvan headlines are trimmed to wrap
+in two clean lines, the crypto medallion's "-5%" moves from the clipped
+top-left corner to the bottom centre, the Poland shield shifts inside the
+medallion so its edge is no longer cut, and the middle box's lines are
+respaced so the block fills the box evenly.
